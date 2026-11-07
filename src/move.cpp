@@ -5,7 +5,7 @@ private:
     u64 data;
 
 public:
-    Move move(int source, int target, int piece ) {
+    Move(int source, int target, int piece ) {
         data = source | (target << 6) | (piece << 12);
     }
 };
