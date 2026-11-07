@@ -87,4 +87,7 @@ public:
         
         std::cout << "  a b c d e f g h\n";
     }
+
+    u64 get_rook_attacks(int square, u64 occupancy);
+    u64 get_bishop_attacks(int square, u64 occupancy);
 };
