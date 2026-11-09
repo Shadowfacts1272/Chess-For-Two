@@ -1,3 +1,6 @@
+#ifndef MAGIC_H
+#define MAGIC_H
+
 #include "typedefs.h"
 
 // Magic bitboard numbers and implementation from https://www.talkchess.com/forum/viewtopic.php?t=60065&start=14
@@ -143,3 +146,5 @@ Magic rook_magics[64] = {
 	{0x0003ffffbf7dfeec, 62946, 0x3e40404040404000},
 	{0x0001ffff9dffa333, 17005, 0x7e80808080808000},
 };
+
+#endif
