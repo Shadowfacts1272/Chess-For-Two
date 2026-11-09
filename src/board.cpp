@@ -1,93 +1,180 @@
 #include <iostream>
+#include "board.h"
 #include "move.cpp"
 #include "tables.h"
+#include "magic.h"
+#include "bitwise.h"
+ 
 
-enum Square {
-    a1, b1, c1, d1, e1, f1, g1, h1,
-    a2, b2, c2, d2, e2, f2, g2, h2,
-    a3, b3, c3, d3, e3, f3, g3, h3,
-    a4, b4, c4, d4, e4, f4, g4, h4,
-    a5, b5, c5, d5, e5, f5, g5, h5,
-    a6, b6, c6, d6, e6, f6, g6, h6,
-    a7, b7, c7, d7, e7, f7, g7, h7,
-    a8, b8, c8, d8, e8, f8, g8, h8
-};
+void Board::print() {
+    static const char* unicode_pieces[13] = {"♙", "♟", "♘", "♞", "♗", "♝", "♖", "♜", "♕", "♛", "♔", "♚", "."};
+    for (int i = 0; i < 8; i++) {
+        std::cout << (i ^ 7) + 1 << " ";
+        for (int j = 0; j < 8; j++) {
+            // Print so a1 is at bottom left corner and a8 is top left
+            int square_state = piece_list[(i * 8 + j) ^ 56];
+            std::cout << unicode_pieces[square_state] << " ";
+        }
+        std::cout << std::endl;
+    }
+        
+    std::cout << "  a b c d e f g h\n";
+}
 
-enum Piece {
-    WP,
-    BP,
-    WN,
-    BN,
-    WB,
-    BB,
-    WR,
-    BR,
-    WQ,
-    BQ,
-    WK,
-    BK,
-    E
-};
+void Board::print_bitboard() {
+    for (int i = 0; i < 8; i++) {
+        std::cout << (i ^ 7) + 1 << " ";
+        for (int j = 0; j < 8; j++) {
+            // Print so a1 is at bottom left corner and a8 is top left
+            int square_state = piece_list[(i * 8 + j) ^ 56];
+            std::cout << ((square_state == E) ? 0 : 1) << " ";
+        }
+        std::cout << std::endl;
+    }
+        
+    std::cout << "  a b c d e f g h\n";
+}
 
-class Board {
-private:
-    u64 bitboards[13];
-    int piece_list[64] = {
-        E, E, E, E, E, E, E, E,
-        E, E, E, E, E, E, E, E,
-        E, E, E, E, E, E, E, E,
-        E, E, E, E, E, E, E, E,
-        E, E, E, E, E, E, E, E,
-        E, E, E, E, E, E, E, E,
-        E, E, E, E, E, E, E, E,
-        E, E, E, E, E, E, E, E,
-    };
+void Board::print_bitboard(u64 bitboard) {
+    for (int i = 0; i < 8; i++) {
+        std::cout << (i ^ 7) + 1 << " ";
+        for (int j = 0; j < 8; j++) {
+            // Print so a1 is at bottom left corner and a8 is top left
+            int square = (i * 8 + j) ^ 56;
+            u64 square_mask = bitboard & (1ULL << square);
+            std::cout << ((bitboard >> square) & 1) << " ";
+        }
+        std::cout << std::endl;
+    }
     
-public:
-    void print() {
-        static const char* unicode_pieces[13] = {"♙", "♟", "♘", "♞", "♗", "♝", "♖", "♜", "♕", "♛", "♔", "♚", "."};
-        for (int i = 0; i < 8; i++) {
-            std::cout << (i ^ 7) + 1 << " ";
-            for (int j = 0; j < 8; j++) {
-                // Print so a1 is at bottom left corner and a8 is top left
-                int square_state = piece_list[(i * 8 + j) ^ 56];
-                std::cout << unicode_pieces[square_state] << " ";
-            }
-            std::cout << std::endl;
+    std::cout << "  a b c d e f g h\n";
+}
+
+// Generate rook masks
+u64 Board::classical_rook_attacks(int square, u64 occupancy) {
+    int i = square % 8;
+    int j = square / 8;
+    u64 mask = 0;
+    // North, south, east, west directions
+    for (int k = i + 1; k < 8; k++) {
+        mask |= (1ULL << (k * 8 + j));
+        if ((1ULL << (k * 8 + j)) & occupancy) {
+            break;
         }
-        
-        std::cout << "  a b c d e f g h\n";
     }
 
-    void print_bitboard() {
-        for (int i = 0; i < 8; i++) {
-            std::cout << (i ^ 7) + 1 << " ";
-            for (int j = 0; j < 8; j++) {
-                // Print so a1 is at bottom left corner and a8 is top left
-                int square_state = piece_list[(i * 8 + j) ^ 56];
-                std::cout << ((square_state == E) ? 0 : 1) << " ";
-            }
-            std::cout << std::endl;
+    for (int k = i - 1; k > -1; k--) {
+        mask |= (1ULL << (k * 8 + j));
+        if ((1ULL << (k * 8 + j)) & occupancy) {
+            break;
         }
-        
-        std::cout << "  a b c d e f g h\n";
     }
 
-    void print_bitboard(u64 bitboard) {
-        for (int i = 0; i < 8; i++) {
-            std::cout << (i ^ 7) + 1 << " ";
-            for (int j = 0; j < 8; j++) {
-                // Print so a1 is at bottom left corner and a8 is top left
-                int square = (i * 8 + j) ^ 56;
-                u64 square_mask = bitboard & (1ULL << square);
-                std::cout << ((bitboard >> square) & 1) << " ";
-            }
-            std::cout << std::endl;
+    for (int k = j + 1; k < 8; k++) {
+        mask |= (1ULL << (i * 8 + k));
+        if ((1ULL << (i * 8 + k)) & occupancy) {
+            break;
         }
-        
-        std::cout << "  a b c d e f g h\n";
     }
 
-    u64 get_rook_attacks(int square, u64 occupancy);
-    u64 get_bishop_attacks(int square, u64 occupancy);
-};
+    for (int k = j - 1; k > -1; k--) {
+        mask |= (1ULL << (i * 8 + k));
+        if ((1ULL << (i * 8 + k)) & occupancy) {
+            break;
+        }
+    }
+
+    return mask;
+}
+
+// Generate bishop masks
+u64 Board::classical_bishop_attacks(int square, u64 occupancy) {
+    int i = square % 8;
+    int j = square / 8;
+    u64 mask = 0;
+    // Northeast
+    for (int k = i + 1, l = j + 1; k < 8 && l < 8; k++, l++) {
+        mask |= (1ULL << (k * 8 + l));
+        if ((1ULL << (k * 8 + l)) & occupancy) {
+            break;
+        }
+    }
+
+    // Southeast
+    for (int k = i - 1, l = j + 1; k > -1 && l < 8; k--, l++) {
+        mask |= (1ULL << (k * 8 + l));
+        if ((1ULL << (k * 8 + l)) & occupancy) {
+            break;
+        }
+    }
+
+    // Southwest
+    for (int k = i - 1, l = j - 1; k > -1 && l > -1; k--, l--) {
+        mask |= (1ULL << (k * 8 + l));
+        if ((1ULL << (k * 8 + l)) & occupancy) {
+            break;
+        }
+    }
+
+    // Northwest
+    for (int k = i + 1, l = j - 1; k < 8 && l > -1; k++, l--) {
+        mask |= (1ULL << (k * 8 + l));
+        if ((1ULL << (k * 8 + l)) & occupancy) {
+            break;
+        }
+    }
+
+    return mask;
+}
+
+void Board::initialize_sliding_piece_attacks() {
+    for (int i = 0; i < 64; i++) {
+        // Handle rook permutations
+        u64 curr_premask = rook_magics[i].premask;
+        int mask_size = pop_count(curr_premask);
+        int permutations = 1 << mask_size;
+        u64 blockers = 0;
+        for (int j = 0; j < permutations; j++) {
+            int curr_permutation = j;
+            // Takes permutation and maps each bit to fit onto the premask
+            for (int k = 0; k < mask_size; k++) {
+                u64 bit = (curr_permutation & (1ULL << k)) >> k;
+                blockers |= bit << return_lsb(curr_premask);
+            }
+
+            lookup_table[rook_magics[i].shift + (blockers * rook_magics[i].magic >> 52)] = classical_rook_attacks(i, blockers);
+            blockers = 0;
+            curr_premask = rook_magics[i].premask;
+        }
+
+        // Handle bishop permutations
+        curr_premask = bishop_magics[i].premask;
+        mask_size = pop_count(curr_premask);
+        permutations = 1 << mask_size;
+        blockers = 0;
+        for (int j = 0; j < permutations; j++) {
+            int curr_permutation = j;
+            // Takes permutation and maps each bit to fit onto the premask
+            for (int k = 0; k < mask_size; k++) {
+                u64 bit = (curr_permutation & (1ULL << k)) >> k;
+                blockers |= bit << return_lsb(curr_premask);
+            }
+
+            lookup_table[bishop_magics[i].shift + (blockers * bishop_magics[i].magic >> 55)] = classical_bishop_attacks(i, blockers);
+            blockers = 0;
+            curr_premask = bishop_magics[i].premask;
+        }
+    }
+}
+
+u64 Board::rook_attacks(int square, u64 occupancy) {
+    return lookup_table[rook_magics[square].shift + ((occupancy & rook_magics[square].premask) * rook_magics[square].magic >> 52)];
+}
+
+u64 Board::bishop_attacks(int square, u64 occupancy) {
+    return lookup_table[bishop_magics[square].shift + ((occupancy & bishop_magics[square].premask) * bishop_magics[square].magic >> 55)];
+}
+
+u64 Board::queen_attacks(int square, u64 occupancy) {
+    return rook_attacks(square, occupancy) | bishop_attacks(square, occupancy);
+}
