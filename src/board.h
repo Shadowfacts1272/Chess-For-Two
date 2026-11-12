@@ -1,3 +1,6 @@
+#ifndef BOARD_H
+#define BOARD_H
+
 #include "move.cpp"
 #include "tables.h"
 #include "magic.h"
@@ -56,3 +59,5 @@ public:
     u64 bishop_attacks(int square, u64 occupancy);
     u64 queen_attacks(int square, u64 occupancy);
 };
+
+#endif

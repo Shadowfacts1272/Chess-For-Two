@@ -1,10 +1,5 @@
 #include <iostream>
 #include "board.h"
-#include "move.cpp"
-#include "tables.h"
-#include "magic.h"
-#include "bitwise.h"
- 
 
 void Board::print() {
     static const char* unicode_pieces[13] = {"♙", "♟", "♘", "♞", "♗", "♝", "♖", "♜", "♕", "♛", "♔", "♚", "."};
